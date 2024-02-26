@@ -152,7 +152,9 @@ void BIB::Loop(int _wedge, bool DEBUG, bool DRAW_HIST, bool CUT_T)
    );
 
    std::string hname1 = "h_time" + std::to_string(wedge);
-   TH1D* time = new TH1D(hname1.c_str(), hname1.c_str(), 100, -1.6, 1.6);
+   TH1D* time;
+   if(CUT_T) time = new TH1D(hname1.c_str(), hname1.c_str(), 100, -0.5, 0.5);
+   else time = new TH1D(hname1.c_str(), hname1.c_str(), 100, -1.6, 1.6);
 
    if(DEBUG) std::cout << "Allocated histograms. Getting entries\n";
 
@@ -164,6 +166,8 @@ void BIB::Loop(int _wedge, bool DEBUG, bool DRAW_HIST, bool CUT_T)
    if(DEBUG) std::cout << "Starting loop\n";
 
    std::cout << "Processing wedge " << wedge << "\n";
+
+   nentries = 1e3;
    
    for (Long64_t jentry = 0; jentry < nentries; jentry++)
    {
@@ -199,6 +203,7 @@ void BIB::Loop(int _wedge, bool DEBUG, bool DRAW_HIST, bool CUT_T)
       }
       updateProgressBar(jentry, nentries);
    }
+   std::cout <<"\n";
    if(DEBUG) std::cout << "Loop over\n";
 
    if(DRAW_HIST){
@@ -217,8 +222,8 @@ void BIB::Loop(int _wedge, bool DEBUG, bool DRAW_HIST, bool CUT_T)
       time->GetXaxis()->SetTitle("normalized hit time [ns]");
       time->GetYaxis()->SetTitle("energy deposition [GeV]");
       time->Draw("hist");
-      if(CUT_T) c1->Print("img/timing_data_cut.png");
-      else c1->Print("img/timing_data.png");
+      if(CUT_T) c1->Print("img/BIB/timing_data_cut.png");
+      else c1->Print("img/BIB/timing_data.png");
 
 
       // Draw the timing distribution of each cell stored in tim_layers
@@ -240,8 +245,11 @@ void BIB::Loop(int _wedge, bool DEBUG, bool DRAW_HIST, bool CUT_T)
       h_time_dist->GetXaxis()->SetTitle("normalized hit time [ns]");
       h_time_dist->GetYaxis()->SetTitle("energy [GeV]");
       h_time_dist->Draw("hist");
-      if(CUT_T) c2->Print("img/timing_voxels_cut.png");
-      else c2->Print("img/timing_voxels.png");  
+      if(CUT_T) c2->Print("img/BIB/timing_voxels_cut.png");
+      else c2->Print("img/BIB/timing_voxels.png");  
+
+      delete c1;
+      delete c2;
    }  
 
    if(!DRAW_HIST){ // if the histograms are not drawn, save them to file
@@ -262,18 +270,9 @@ void BIB::Loop(int _wedge, bool DEBUG, bool DRAW_HIST, bool CUT_T)
 
       std::cout << "Files closed\n";
    }
-   // Deleting the histograms
-   /*
-   for(int i_layer=0; i_layer<5; i_layer++)
-   {
-      if(DEBUG) std::cout << "Deleted layer " << i_layer << "\n";
-      delete bib_layers[i_layer];
-      delete tim_layers[i_layer];
-   }
-   */
    bib_layers.clear();
    tim_layers.clear();
-   std::cout << "Exiting\n";
+   if(DEBUG) std::cout << "Exiting\n";
    return;
 }
 
