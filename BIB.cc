@@ -1,5 +1,9 @@
+#ifndef BIB_cxx
 #define BIB_cxx
-#include "BIB.h"
+#include "BIB.hh"
+#include <iomanip>
+#include <chrono>
+#include <thread>
 #include <TMath.h>
 #include <TH2.h>
 #include <vector>
@@ -102,6 +106,17 @@ std::vector<double> Rotate(double x, double y, double angle)
    return new_coords;
 }
 
+void updateProgressBar(int progress, int total, int barWidth = 50) {
+    float fraction = static_cast<float>(progress) / total;
+    int progressWidth = static_cast<int>(fraction * barWidth);
+
+    std::cout << "\r[";
+    for (int i = 0; i < progressWidth; ++i) std::cout << "=";
+    for (int i = progressWidth; i < barWidth; ++i) std::cout << " ";
+    std::cout << "] " << std::setw(3) << static_cast<int>(fraction * 100.0) << "%";
+    std::cout.flush();
+}
+
 // CODE STARTS HERE! ----------------------------------------------------------
 
 void BIB::Loop(int _wedge, bool DEBUG, bool DRAW_HIST, bool CUT_T)
@@ -153,6 +168,7 @@ void BIB::Loop(int _wedge, bool DEBUG, bool DRAW_HIST, bool CUT_T)
    for (Long64_t jentry = 0; jentry < nentries; jentry++)
    {
       fChain->GetEntry(jentry);
+
       if(DEBUG) std::cout << "Entry #" << jentry << "\n";
       for (int i_hit = 0; i_hit < nsch; ++i_hit)
       {
@@ -181,6 +197,7 @@ void BIB::Loop(int _wedge, bool DEBUG, bool DRAW_HIST, bool CUT_T)
             }
          }
       }
+      updateProgressBar(jentry, nentries);
    }
    if(DEBUG) std::cout << "Loop over\n";
 
@@ -260,13 +277,4 @@ void BIB::Loop(int _wedge, bool DEBUG, bool DRAW_HIST, bool CUT_T)
    return;
 }
 
-/*
-int main(){
-   std::cout << "Starting\n";
-   BIB bib;
-   for(int ii=0; ii<12; ii++){
-      bib.Loop(ii, 0, 0, 1);
-   }
-   return 0;
-}
-*/
+# endif

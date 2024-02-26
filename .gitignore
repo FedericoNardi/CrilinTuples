@@ -1,0 +1,6 @@
+*.pcm
+*.d
+*.so
+*_ACLiC_*
+.vscode
+tuple_converter_*

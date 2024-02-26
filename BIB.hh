@@ -5,8 +5,8 @@
 // found on file: /lustre/cmsdata/fnardi/MuColl_sim/BIB/BIB.root
 //////////////////////////////////////////////////////////
 
-#ifndef BIB_h
-#define BIB_h
+#ifndef BIB_hh
+#define BIB_hh
 
 #include <TROOT.h>
 #include <TChain.h>
