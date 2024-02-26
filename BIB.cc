@@ -11,7 +11,6 @@
 #include <TProfile.h>
 #include <TStyle.h>
 #include <TCanvas.h>
-// #include <TApplication.h>
 
 // A SET OF GLOBAL VARIABLES -----------------------------------------------
 
@@ -148,6 +147,8 @@ void BIB::Loop(int _wedge, bool DEBUG, bool DRAW_HIST, bool CUT_T)
    double radius_cut = 300;
 
    if(DEBUG) std::cout << "Starting loop\n";
+
+   std::cout << "Processing wedge " << wedge << "\n";
    
    for (Long64_t jentry = 0; jentry < nentries; jentry++)
    {
@@ -245,21 +246,27 @@ void BIB::Loop(int _wedge, bool DEBUG, bool DRAW_HIST, bool CUT_T)
       std::cout << "Files closed\n";
    }
    // Deleting the histograms
+   /*
    for(int i_layer=0; i_layer<5; i_layer++)
    {
       if(DEBUG) std::cout << "Deleted layer " << i_layer << "\n";
       delete bib_layers[i_layer];
       delete tim_layers[i_layer];
    }
+   */
    bib_layers.clear();
    tim_layers.clear();
    std::cout << "Exiting\n";
    return;
 }
 
-int main()
-{  
+/*
+int main(){
+   std::cout << "Starting\n";
    BIB bib;
-   for(int wedge = 0; wedge < 12; wedge++) bib.Loop(wedge,0,0,1);
+   for(int ii=0; ii<12; ii++){
+      bib.Loop(ii, 0, 0, 1);
+   }
    return 0;
 }
+*/
