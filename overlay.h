@@ -5,8 +5,8 @@
 // found on file: /home/sestini/photons_Crilin_v2/simulation/ddsim/crilin_v2/175GeV_1.57rad/photonGun_175GeV_1.57rad_gen_crilin_v2.root
 //////////////////////////////////////////////////////////
 
-#ifndef converter_new_h
-#define converter_new_h
+#ifndef overlay_h
+#define overlay_h
 
 #include <TROOT.h>
 #include <TChain.h>
@@ -15,7 +15,7 @@
 
 // Header file for the classes stored in the TTree if any.
 
-class converter_new {
+class overlay {
 public :
 
    TTree          *fChain;   //!pointer to the analyzed TTree or TChain
@@ -69,8 +69,8 @@ public :
    TBranch        *b_scmcc;   //!
    TBranch        *b_sctim;   //!
 
-   converter_new(TTree *tree=0);
-   virtual ~converter_new();
+   overlay(TTree *tree=0);
+   virtual ~overlay();
    virtual Int_t    Cut(Long64_t entry);
    virtual Int_t    GetEntry(Long64_t entry);
    virtual Long64_t LoadTree(Long64_t entry);
@@ -82,8 +82,8 @@ public :
 
 #endif
 
-#ifdef converter_new_cxx
-converter_new::converter_new(TTree *tree) : fChain(0) 
+#ifdef overlay_cxx
+overlay::overlay(TTree *tree) : fChain(0) 
 {
 // if parameter tree is not specified (or zero), connect the file
 // used to generate this class and read the Tree.
@@ -99,19 +99,19 @@ converter_new::converter_new(TTree *tree) : fChain(0)
    Init(tree);
 }
 
-converter_new::~converter_new()
+overlay::~overlay()
 {
    if (!fChain) return;
    delete fChain->GetCurrentFile();
 }
 
-Int_t converter_new::GetEntry(Long64_t entry)
+Int_t overlay::GetEntry(Long64_t entry)
 {
 // Read contents of entry.
    if (!fChain) return 0;
    return fChain->GetEntry(entry);
 }
-Long64_t converter_new::LoadTree(Long64_t entry)
+Long64_t overlay::LoadTree(Long64_t entry)
 {
 // Set the environment to read one entry
    if (!fChain) return -5;
@@ -124,7 +124,7 @@ Long64_t converter_new::LoadTree(Long64_t entry)
    return centry;
 }
 
-void converter_new::Init(TTree *tree)
+void overlay::Init(TTree *tree)
 {
    // The Init() function is called when the selector needs to initialize
    // a new tree or chain. Typically here the branch addresses and branch
@@ -163,7 +163,7 @@ void converter_new::Init(TTree *tree)
    Notify();
 }
 
-Bool_t converter_new::Notify()
+Bool_t overlay::Notify()
 {
    // The Notify() function is called when a new file is opened. This
    // can be either for a new TTree in a TChain or when when a new TTree
@@ -174,18 +174,18 @@ Bool_t converter_new::Notify()
    return kTRUE;
 }
 
-void converter_new::Show(Long64_t entry)
+void overlay::Show(Long64_t entry)
 {
 // Print contents of entry.
 // If entry is not specified, print current entry
    if (!fChain) return;
    fChain->Show(entry);
 }
-Int_t converter_new::Cut(Long64_t entry)
+Int_t overlay::Cut(Long64_t entry)
 {
 // This function may be called from Loop.
 // returns  1 if entry is accepted.
 // returns -1 otherwise.
    return 1;
 }
-#endif // #ifdef converter_new_cxx
+#endif // #ifdef overlay_cxx

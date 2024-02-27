@@ -1,4 +1,4 @@
-#define converter_new_cxx
+#define overlay_cxx
 #include "overlay.h"
 #include <TH2.h>
 #include <TStyle.h>
@@ -10,6 +10,7 @@
 #include <iostream>
 #include <set>
 #include <TMath.h>
+#include <iomanip>
 
 // A SET OF GLOBAL VARIABLES -----------------------------------------------
 
@@ -18,7 +19,7 @@ const std::vector<float> _halflength_x = {397.8, 418.2, 428.4, 438.6, 448.8};
 const int _bins_z = 435;
 const float _halflength_z = 2213.2;
 
-bool DEBUG = true;
+bool DEBUG = false;
 
 // SOME HELPER FUNCTIONS ---------------------------------------------------
 
@@ -100,9 +101,20 @@ std::vector<double> Rotate(double x, double y, double angle)
     return new_coords;
 }
 
+void updateProgressBar(int progress, int total, int barWidth = 50) {
+    float fraction = static_cast<float>(progress) / total;
+    int progressWidth = static_cast<int>(fraction * barWidth);
+
+    std::cout << "\r[";
+    for (int i = 0; i < progressWidth; ++i) std::cout << "=";
+    for (int i = progressWidth; i < barWidth; ++i) std::cout << " ";
+    std::cout << "] " << std::setw(3) << static_cast<int>(fraction * 100.0) << "%";
+    std::cout.flush();
+}
+
 // CODE STARTS HERE! ----------------------------------------------------------
 
-void converter_new::Loop()
+void overlay::Loop()
 {
     if (fChain == nullptr)
         return;
@@ -161,6 +173,7 @@ void converter_new::Loop()
         for (Long64_t jentry = 100 * i_file; jentry < 100 * (i_file + 1); jentry++)
         {
             // if(jentry>0){continue;}  // Cut for DEBUG
+            updateProgressBar(jentry, 100 * (i_file + 1));
             Long64_t ientry = LoadTree(jentry);
             if (ientry < 0)
                 break;
@@ -224,7 +237,7 @@ void converter_new::Loop()
                     if(DEBUG) std::cout << "Getting: " << Form("h_layer_%d_%d", w, i_layer) << "\n";
                     bib_layers[i_layer] = dynamic_cast<TH2D *>(bib_file->Get(Form("h_layer_%d_%d", w, i_layer))->Clone());
                     if(DEBUG) std::cout << "energy hist " << w << '_' << i_layer << '_' << bib_file->Get(Form("h_layer_%d_%d", w, i_layer))->Clone() << std::endl;
-                    bib_t_layers[i_layer] = dynamic_cast<TH2D *>(bib_t_file->Get(Form("h_layer_%d_%d", w, i_layer))->Clone());
+                    bib_t_layers[i_layer] = dynamic_cast<TH2D *>(bib_t_file->Get(Form("h_layer_t_%d_%d", w, i_layer))->Clone());
                     if(DEBUG) std::cout << "time hist " << w << '_' << i_layer << '_' << bib_t_layers[i_layer]->GetName() << std::endl;
                 }
                 if(DEBUG) std::cout << "---> Got bib layers\n";
@@ -242,9 +255,9 @@ void converter_new::Loop()
                         layers_t[layer_idx]->Fill(sig_z[i_hits], coords[0], sig_t[i_hits]);
                     }
                 } 
-                auto h_tim_signal   = new TH1D("h_tim_signal", "h_tim_signal", 100, -0.6, 1.5);
-                auto h_tim_bib      = new TH1D("h_tim_bib", "h_tim_bib", 100, -0.6, 1.5);
-                auto h_tim_overall  = new TH1D("h_tim_overall", "h_tim_overall", 100, -0.6, 1.5);
+                auto h_tim_signal   = new TH1D("h_tim_signal", "h_tim_signal", 25, -0.25, 0.25);
+                auto h_tim_bib      = new TH1D("h_tim_bib", "h_tim_bib", 25, -0.25, 0.25);
+                auto h_tim_overall  = new TH1D("h_tim_overall", "h_tim_overall", 25, -0.25, 0.25);
                 
 
                 for (int i_layer = 0; i_layer < 5; ++i_layer)
@@ -269,7 +282,7 @@ void converter_new::Loop()
                             double angle = (8. - w) * TMath::Pi() / 6;
                             std::vector<double> final_xy = Rotate(inner_x, 1510. + i_layer * 45., -angle);
 
-                            // if (TMath::Abs(z) < 250 && TMath::Abs(calculateTheta(final_xy[0], final_xy[1]) - theta_mean) < theta_std)
+                            if (TMath::Abs(z) < 300 && TMath::Abs(calculateTheta(final_xy[0], final_xy[1]) - theta_mean) < theta_std)
                             {
                                 hit_x.push_back(final_xy[0]);
                                 hit_y.push_back(final_xy[1]);
@@ -287,11 +300,11 @@ void converter_new::Loop()
                                     double shift = r/3.E2;
                                     h_tim_signal->Fill(t_sig-shift, dE_signal);
                                     h_tim_bib->Fill(t_bib, dE_bib);
-                                    auto t_hit = t_sig*1e-2-shift < t_bib ? t_sig*1e-2 : t_bib;
+                                    auto t_hit = t_sig-shift < t_bib ? t_sig : t_bib;
                                     h_tim_overall->Fill(t_hit, dE_signal);
-                                    //if(DEBUG){
-                                        std::cout << t_sig-shift << " " << t_sig << " " << shift << " " << t_bib << std::endl;
-                                    //}
+                                    
+                                    if(DEBUG) std::cout << t_sig-shift << " " << t_sig << " " << shift << " " << t_bib << std::endl;
+                                    
                                 }
                             }
                         }
@@ -304,15 +317,18 @@ void converter_new::Loop()
                 if (jentry == 1)
                 {
                     TCanvas *c1 = new TCanvas("c1", "c1", 800, 600);
-                    // c1->SetLogy();
+                    c1->SetLogy();
                     // Title
-                    h_tim_bib->SetTitle("BIB timing");
-                    //h_tim_signal->SetLineColor(858);
+                    h_tim_signal->SetTitle("crilin ntuple timing");
+                    h_tim_signal->SetLineColor(858);
+                    // Axis labels
+                    h_tim_signal->GetXaxis()->SetTitle("Time [ns]");
+                    h_tim_signal->GetYaxis()->SetTitle("Energy [GeV]");
                     
                     h_tim_bib->SetLineColor(795);
-                    h_tim_bib->Draw("hist");
-                    /*
+                    h_tim_bib->SetLineWidth(2);
                     h_tim_overall->SetLineColor(kSpring-6);
+                    h_tim_signal->SetLineWidth(2);
                     h_tim_overall->SetFillColor(kSpring-5);
                     h_tim_overall->SetFillStyle(3001);
                     // no stats
@@ -337,15 +353,12 @@ void converter_new::Loop()
                     leg->SetBorderSize(0);
                     // legend location top right
                     leg->Draw();
-                    */
                     
-                    c1->SaveAs("timing_hist_bib.png");
-                    std::cout << "Total signal deposited: " << h_tim_signal->Integral() << std::endl;
+                    c1->SaveAs("timing_hist_full.png");
+                    if(DEBUG) std::cout << "Total signal deposited: " << h_tim_signal->Integral() << std::endl;
+                    // close canvas
+                    delete c1;
                 }
-                // delete histograms
-                // delete h_tim_signal;
-                // delete h_tim_bib;
-                // delete h_tim_overall;
 
                 if(DEBUG) std::cout << "---> Reset layers \n";
                 for (auto &elem : bib_layers)
@@ -377,6 +390,6 @@ void converter_new::Loop()
         tree->Write();
         ofile->Close();
 
-        std::cout << "--> Wrote file #" << i_file << "\n";
+        std::cout << "\n--> Wrote file #" << i_file << "\n";
     }
 }
